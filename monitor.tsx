@@ -18,6 +18,56 @@ import { useFloatingWindow } from "./use-floating-window";
 const ROW_HEIGHT = 36;
 const GROUP_HEIGHT = 24;
 const LIST_HEIGHT = 288;
+const PAGE_INSET_SELECTOR = '[data-sidebar="inset"]';
+const PAGE_SHELF_ATTRIBUTES = [
+  "data-sidebar-shelf",
+  "data-panel-shelf",
+  "style",
+];
+
+/**
+ * On a phone bb reveals the sidebar and the right panel as shelves that slide
+ * the page aside. This window is fixed at the app root, so it would stay put
+ * and cover the open shelf. bb marks the page inset while a shelf is settled
+ * (data-sidebar-shelf, data-panel-shelf) and moves it with an inline translate
+ * while a swipe or settle is in flight, so the window hides for as long as
+ * either says the page is shelved. Desktop never sets these, and a missing
+ * inset leaves the window as it is.
+ */
+function isPageShelved(inset: HTMLElement): boolean {
+  const sidebarShelf = inset.getAttribute("data-sidebar-shelf");
+  const panelShelf = inset.getAttribute("data-panel-shelf");
+  if (
+    sidebarShelf === "open" ||
+    panelShelf === "shelf" ||
+    panelShelf === "full"
+  )
+    return true;
+  const translate = inset.style.translate ?? "";
+  return (
+    translate !== "" && translate !== "none" && parseFloat(translate) !== 0
+  );
+}
+function usePageShelved(): boolean {
+  const [shelved, setShelved] = useState(false);
+  useLayoutEffect(() => {
+    const inset = document.querySelector(PAGE_INSET_SELECTOR);
+    if (
+      !(inset instanceof HTMLElement) ||
+      typeof MutationObserver !== "function"
+    )
+      return;
+    const update = () => setShelved(isPageShelved(inset));
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(inset, {
+      attributes: true,
+      attributeFilter: PAGE_SHELF_ATTRIBUTES,
+    });
+    return () => observer.disconnect();
+  }, []);
+  return shelved;
+}
 function preference(key: string): string | null {
   try {
     return localStorage.getItem(`pool-monitor:${key}`);
@@ -266,7 +316,6 @@ const AccountRow = memo(function AccountRow({
             className={`pm-status-dot ${a.hasError || !a.enabled || a.status !== "ready" ? "pm-attention" : a.active ? "pm-running" : ""}`}
           />
           <span className="pm-name-text">{a.identity}</span>
-
         </span>
       </span>
       <span className="pm-quotas">
@@ -307,6 +356,7 @@ export function Monitor({
   const [viewportHeight, setViewportHeight] = useState(LIST_HEIGHT);
   const scrollRef = useRef<HTMLDivElement>(null);
   const floating = useFloatingWindow(collapsed);
+  const shelved = usePageShelved();
   const layout = useMemo(
     () => buildLayout(snapshot.accounts),
     [snapshot.accounts],
@@ -368,9 +418,10 @@ export function Monitor({
   return (
     <aside
       ref={floating.rootRef}
-      className={`pm-root pm-${floating.corner} ${collapsed ? "pm-collapsed" : ""}`}
+      className={`pm-root pm-${floating.corner} ${collapsed ? "pm-collapsed" : ""} ${shelved ? "pm-shelved" : ""}`}
       style={floating.style}
       aria-label="Usage Window"
+      aria-hidden={shelved || undefined}
     >
       <header
         className="pm-header"

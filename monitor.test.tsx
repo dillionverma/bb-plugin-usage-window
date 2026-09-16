@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it } from "vitest";
-import { cleanup, fireEvent, render, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { Monitor } from "./monitor";
 import type { Account, Snapshot } from "./model";
 const now = Date.now();
@@ -25,7 +31,16 @@ const snapshot: Snapshot = { accounts, fetchedAt: now, error: null };
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  document.querySelector('[data-sidebar="inset"]')?.remove();
 });
+
+function mountPageInset(shelf?: "open" | "closed") {
+  const inset = document.createElement("main");
+  inset.setAttribute("data-sidebar", "inset");
+  if (shelf) inset.setAttribute("data-sidebar-shelf", shelf);
+  document.body.appendChild(inset);
+  return inset;
+}
 
 it.each([20, 200, 2000])(
   "keeps %i accounts accessible with bounded DOM rows",
@@ -179,4 +194,48 @@ it("keeps provider and quota labels pinned while scrolling between groups", () =
   fireEvent.scroll(list, { target: { scrollTop: 6000 } });
   expect(heading().getByText("Claude")).toBeTruthy();
   expect(heading().getByText("Weekly")).toBeTruthy();
+});
+
+it("hides while bb's page is shelved on a phone and returns when it settles back", async () => {
+  const inset = mountPageInset("closed");
+  const view = render(<Monitor snapshot={snapshot} now={now} />);
+  const root = view.getByLabelText("Usage Window");
+  expect(root.classList.contains("pm-shelved")).toBe(false);
+
+  inset.setAttribute("data-sidebar-shelf", "open");
+  await waitFor(() => expect(root.classList.contains("pm-shelved")).toBe(true));
+  expect(root.getAttribute("aria-hidden")).toBe("true");
+
+  inset.setAttribute("data-sidebar-shelf", "closed");
+  await waitFor(() =>
+    expect(root.classList.contains("pm-shelved")).toBe(false),
+  );
+  expect(root.getAttribute("aria-hidden")).toBeNull();
+
+  inset.style.translate = "120px";
+  await waitFor(() => expect(root.classList.contains("pm-shelved")).toBe(true));
+  inset.style.translate = "0px";
+  await waitFor(() =>
+    expect(root.classList.contains("pm-shelved")).toBe(false),
+  );
+
+  inset.setAttribute("data-panel-shelf", "shelf");
+  await waitFor(() => expect(root.classList.contains("pm-shelved")).toBe(true));
+  inset.setAttribute("data-panel-shelf", "closed");
+  await waitFor(() =>
+    expect(root.classList.contains("pm-shelved")).toBe(false),
+  );
+});
+it("stays visible on desktop, where bb never marks the page as shelved", () => {
+  mountPageInset();
+  const view = render(<Monitor snapshot={snapshot} now={now} />);
+  expect(
+    view.getByLabelText("Usage Window").classList.contains("pm-shelved"),
+  ).toBe(false);
+});
+it("stays visible without a page inset", () => {
+  const view = render(<Monitor snapshot={snapshot} now={now} />);
+  expect(
+    view.getByLabelText("Usage Window").classList.contains("pm-shelved"),
+  ).toBe(false);
 });

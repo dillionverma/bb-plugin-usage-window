@@ -33,6 +33,26 @@
   isolation: isolate;
   color-scheme: inherit;
 }
+/* Hidden while bb shelves the page aside on a phone; see usePageShelved. */
+.pm-root {
+  transition:
+    opacity 160ms ease,
+    visibility 0s linear 0s;
+}
+.pm-root.pm-shelved {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 160ms ease,
+    visibility 0s linear 160ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pm-root,
+  .pm-root.pm-shelved {
+    transition: none;
+  }
+}
 .pm-root[style*="left"] {
   max-height: calc(100dvh - 16px);
 }
