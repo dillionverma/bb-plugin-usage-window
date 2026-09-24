@@ -56,7 +56,12 @@ it("registers one persistent overlay and stops polling while hidden or unmounted
 });
 it("uses only public SDK surfaces", async () => {
   const report = await experimental_scanPublicSdkOnly(process.cwd(), {
-    allow: [/^@testing-library\/react$/, /^vitest$/, /^react$/],
+    allow: [
+      /^@testing-library\/react$/,
+      /^vitest$/,
+      /^react$/,
+      /^@radix-ui\/react-tooltip$/,
+    ],
   });
   expect(report.violations).toEqual([]);
   expect(report.privateDependencies).toEqual([]);

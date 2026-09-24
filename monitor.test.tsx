@@ -64,7 +64,7 @@ it.each([20, 200, 2000])(
     ).toBeLessThanOrEqual(12);
   },
 );
-it("keeps only window controls and uses usage even with an old Left preference", () => {
+it("keeps only window controls and uses usage even with an old Left preference", async () => {
   localStorage.setItem("pool-monitor:display", "left");
   const view = render(<Monitor snapshot={snapshot} now={now} />);
   expect(view.queryByLabelText("Search accounts")).toBeNull();
@@ -79,9 +79,8 @@ it("keeps only window controls and uses usage even with an old Left preference",
   expect(view.queryByLabelText("Move monitor to next corner")).toBeNull();
   fireEvent.click(view.getByText("test-0@example.com"));
   expect(view.getAllByText("test-0@example.com")).toHaveLength(1);
-  expect(
-    view.getByText("test-0@example.com").closest("button")!.title,
-  ).toContain("Observed");
+  fireEvent.focus(view.getByText("test-0@example.com").closest("button")!);
+  expect((await view.findByRole("tooltip")).textContent).toContain("Observed");
   expect(view.queryByLabelText("Account details")).toBeNull();
 });
 it("preserves corner and collapsed mode and restores the start of a scrolled list", () => {
@@ -139,7 +138,7 @@ it("shows every Claude/Codex limit with its matching reset and account without o
   expect(row.getByText("2d 21h")).toBeTruthy();
   expect(view.queryByLabelText("Account details")).toBeNull();
 });
-it("keeps extra limits visible beyond three, and distinguishes unknown and elapsed readings", () => {
+it("keeps extra limits visible beyond three, and distinguishes unknown and elapsed readings", async () => {
   const account = {
     ...accounts[0]!,
     observedAt: now - 6 * 60000,
@@ -161,9 +160,10 @@ it("keeps extra limits visible beyond three, and distinguishes unknown and elaps
   expect(view.getByText("Pending").getAttribute("aria-label")).toBe(
     "Awaiting update",
   );
-  expect(view.getByText("1 old reading")).toBeTruthy();
+  expect(view.getByText(/1 old reading · Checked \ds ago/)).toBeTruthy();
   fireEvent.click(view.getByText("test-0@example.com"));
-  const tooltip = view.getByText("test-0@example.com").closest("button")!.title;
+  fireEvent.focus(view.getByText("test-0@example.com").closest("button")!);
+  const tooltip = (await view.findByRole("tooltip")).textContent;
   expect(tooltip).toContain("Awaiting update");
   expect(tooltip).toContain("Reset unknown");
   expect(view.queryByLabelText("Account details")).toBeNull();

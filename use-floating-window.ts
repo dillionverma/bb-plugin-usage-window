@@ -144,6 +144,7 @@ export function useFloatingWindow(collapsed: boolean) {
   const latest = useRef({ position, size, collapsed });
   latest.current = { position, size, collapsed };
   const interaction = useRef<Interaction | null>(null);
+  const dragged = useRef(false);
   const frame = useRef<number | null>(null);
 
   function commitPosition(next: Position) {
@@ -204,7 +205,7 @@ export function useFloatingWindow(collapsed: boolean) {
       });
       commitSize(nextSize);
       commitPosition(nextPosition);
-    } else {
+    } else if (dragged.current) {
       commitPosition(fitPosition(current.nextPosition, current.startSize));
     }
   }
@@ -263,6 +264,7 @@ export function useFloatingWindow(collapsed: boolean) {
         return;
       const root = rootRef.current;
       if (!root) return;
+      dragged.current = false;
       event.preventDefault();
       const rect = root.getBoundingClientRect();
       event.currentTarget.setPointerCapture(event.pointerId);
@@ -284,6 +286,15 @@ export function useFloatingWindow(collapsed: boolean) {
       const current = interaction.current;
       if (!current || current.kind !== "drag" || current.id !== event.pointerId)
         return;
+      if (
+        !dragged.current &&
+        Math.hypot(
+          event.clientX - current.startPointer.x,
+          event.clientY - current.startPointer.y,
+        ) < 5
+      )
+        return;
+      dragged.current = true;
       current.nextPosition = {
         x: clamp(
           current.startPosition.x + event.clientX - current.startPointer.x,
@@ -309,6 +320,12 @@ export function useFloatingWindow(collapsed: boolean) {
     },
     onPointerCancel: finish,
     onLostPointerCapture: finish,
+    onClick(event) {
+      if (dragged.current) {
+        dragged.current = false;
+        event.preventDefault();
+      }
+    },
     onKeyDown(event) {
       if (event.target !== event.currentTarget || interaction.current) return;
       const delta = directions[event.key];

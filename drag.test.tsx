@@ -31,7 +31,7 @@ it("drags with capture, saves the position,", () => {
   const grip = view.getByLabelText("Drag to move monitor");
   grip.setPointerCapture = vi.fn();
   grip.releasePointerCapture = vi.fn();
-  fireEvent.pointerDown(view.getByText("Pool"), {
+  fireEvent.pointerDown(view.getByText("Usage"), {
     button: 0,
     clientX: 620,
     clientY: 320,
@@ -43,6 +43,7 @@ it("drags with capture, saves the position,", () => {
   frames[0]!(0);
   expect(panel.style.transform).toBe("translate3d(-400px, -200px, 0)");
   fireEvent.pointerUp(grip);
+  fireEvent.click(grip);
   expect(panel.style.transform).toBe("");
   expect(view.getByLabelText("Pooled account list")).toBeTruthy();
   expect(panel.style.left).toBe("200px");
@@ -83,18 +84,36 @@ it("ignores malformed saved positions and sizes", () => {
   expect(view.getByLabelText("Usage Window").style.height).toBe("");
 });
 
-it("does not drag or collapse from a title click and preserves header buttons", () => {
+it("toggles from header taps and preserves the icon button without double toggling", () => {
   vi.stubGlobal("PointerEvent", MouseEvent);
   const view = render(<Monitor snapshot={snapshot} now={1} />);
   const header = view.getByLabelText("Drag to move monitor");
   header.setPointerCapture = vi.fn();
-  fireEvent.click(view.getByText("Pool"));
+  header.releasePointerCapture = vi.fn();
+  fireEvent.pointerDown(view.getByText("Usage"), {
+    button: 0,
+    clientX: 620,
+    clientY: 320,
+  });
+  fireEvent.pointerMove(header, { clientX: 622, clientY: 321 });
+  fireEvent.pointerUp(header);
+  fireEvent.click(view.getByText("Usage"));
+  expect(view.queryByLabelText("Pooled account list")).toBeNull();
+  expect(localStorage.getItem("pool-monitor:position")).toBeNull();
+  fireEvent.click(header);
   expect(view.getByLabelText("Pooled account list")).toBeTruthy();
+  vi.mocked(header.setPointerCapture).mockClear();
   const minimize = view.getByLabelText("Minimize account monitor");
   fireEvent.pointerDown(minimize, { button: 0 });
   expect(header.setPointerCapture).not.toHaveBeenCalled();
   fireEvent.click(minimize);
   expect(view.queryByLabelText("Pooled account list")).toBeNull();
+  fireEvent.click(view.getByLabelText("Expand account monitor"));
+  expect(view.getByLabelText("Pooled account list")).toBeTruthy();
+  fireEvent.keyDown(header, { key: "Enter" });
+  expect(view.queryByLabelText("Pooled account list")).toBeNull();
+  fireEvent.keyDown(header, { key: " " });
+  expect(view.getByLabelText("Pooled account list")).toBeTruthy();
 });
 
 it("resizes once per frame from a fixed top-left and persists on release", () => {
