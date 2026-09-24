@@ -3,13 +3,22 @@ import { Monitor } from "./monitor";
 import { useSnapshot } from "./use-snapshot";
 import "./app.css";
 function LiveMonitor() {
-  const { snapshot, now, refresh, refreshing } = useSnapshot();
+  const {
+    snapshot,
+    now,
+    refresh,
+    refreshing,
+    refreshAccount,
+    refreshingAccounts,
+  } = useSnapshot();
   return (
     <Monitor
       snapshot={snapshot}
       now={now}
       onRefresh={refresh}
       refreshing={refreshing}
+      onRefreshAccount={refreshAccount}
+      refreshingAccounts={refreshingAccounts}
     />
   );
 }

@@ -402,9 +402,13 @@ function visibleItems(items: Item[], scrollTop: number, height: number) {
 const AccountRow = memo(function AccountRow({
   item,
   now,
+  refreshing,
+  onRefresh,
 }: {
   item: Item;
   now: number;
+  refreshing: boolean;
+  onRefresh?: (accountId: string) => void;
 }) {
   const a = item.account!;
   const stale = isStale(a, now);
@@ -434,11 +438,20 @@ const AccountRow = memo(function AccountRow({
               </span>
             </span>
           ))}
+          {onRefresh && (
+            <span className="pm-tip-hint">
+              {refreshing ? "Refreshing…" : "Click to refresh usage"}
+            </span>
+          )}
         </>
       }
     >
       <button
-        className={`pm-row pm-grid ${stale ? "pm-stale" : ""} ${!a.enabled ? "pm-disabled" : ""}`}
+        className={`pm-row pm-grid ${stale ? "pm-stale" : ""} ${!a.enabled ? "pm-disabled" : ""} ${refreshing ? "pm-refreshing" : ""}`}
+        aria-busy={refreshing}
+        onClick={() => {
+          if (!refreshing) onRefresh?.(a.id);
+        }}
         style={
           {
             height: item.height,
@@ -480,9 +493,13 @@ export function Monitor({
   now,
   onRefresh,
   refreshing = false,
+  onRefreshAccount,
+  refreshingAccounts,
 }: {
   onRefresh?: () => void;
   refreshing?: boolean;
+  onRefreshAccount?: (accountId: string) => void;
+  refreshingAccounts?: ReadonlySet<string>;
   snapshot: Snapshot;
   now: number;
 }) {
@@ -698,7 +715,15 @@ export function Monitor({
                         }}
                       >
                         {item.account ? (
-                          <AccountRow item={item} now={now} />
+                          <AccountRow
+                            item={item}
+                            now={now}
+                            refreshing={
+                              refreshing ||
+                              !!refreshingAccounts?.has(item.account.id)
+                            }
+                            onRefresh={onRefreshAccount}
+                          />
                         ) : (
                           item.group !== pinnedGroup && (
                             <GroupHeading group={item.group} />
@@ -736,7 +761,11 @@ export function Monitor({
                   {freshness}
                 </span>
               </Tip>
-              <Tip content={refreshing ? "Refreshing…" : "Refresh readings"}>
+              <Tip
+                content={
+                  refreshing ? "Refreshing…" : "Refresh usage from providers"
+                }
+              >
                 <button
                   className={`pm-icon ${refreshing ? "pm-spinning" : ""}`}
                   onClick={onRefresh}

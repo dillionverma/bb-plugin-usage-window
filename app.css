@@ -589,7 +589,24 @@
   min-width: 0;
 }
 .pm-root .pm-row {
-  cursor: default;
+  cursor: pointer;
+}
+.pm-root .pm-row.pm-refreshing {
+  cursor: progress;
+}
+.pm-row.pm-refreshing .pm-quotas {
+  animation: pm-pulse 1.2s ease-in-out infinite;
+}
+@keyframes pm-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pm-row.pm-refreshing .pm-quotas {
+    animation: none;
+    opacity: 0.6;
+  }
 }
 .pm-root .pm-quotas {
   min-width: 0;

@@ -228,3 +228,21 @@ it("omits empty Codex secondary header slots without inventing a five-hour windo
     { label: "Week", used: 0.08, resetAt: 100000 },
   ]);
 });
+
+it("forced refresh during an in-flight read waits for a fresh read", async () => {
+  let accounts = normalizePool(poolSchema.parse({ accounts: [raw] }));
+  let calls = 0;
+  const read = createSnapshotCache(async () => {
+    const current = accounts;
+    calls++;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return current;
+  });
+  const polling = read();
+  await Promise.resolve();
+  accounts = [];
+  const forced = read(true);
+  expect((await polling).accounts).toHaveLength(1);
+  expect((await forced).accounts).toHaveLength(0);
+  expect(calls).toBe(2);
+});

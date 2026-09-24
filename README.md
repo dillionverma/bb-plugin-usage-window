@@ -9,6 +9,7 @@ A plugin for [BB](https://getbb.app).
 - **All reported quotas.** Claude and Codex accounts, including model-specific limits when available.
 - **Time to reset.** Per-limit usage bars and countdowns, with explicit stale and missing readings.
 - **Fits your workspace.** Drag, resize, minimize, and keep your preferred position.
+- **Refresh on click.** Refresh pulls fresh quotas from every provider; click an account to refresh just that one.
 - **Account details.** Inspect readiness, plan, identity, and observation age without leaving BB.
 
 ## Install
@@ -27,7 +28,7 @@ Enable BB’s **Account Pooler** first. Usage Window displays the quotas it repo
 
 ## Designed to stay responsive
 
-Virtualized rows keep off-screen accounts out of the rendered list. Reads share a 15-second cache; visible clients poll every 5 seconds and hidden tabs pause. Drag and resize updates use animation frames. The plugin does not fetch upstream quotas or change routing.
+Virtualized rows keep off-screen accounts out of the rendered list. Reads share a 3-second cache; visible clients poll every 5 seconds and hidden tabs pause. Drag and resize updates use animation frames. Upstream quotas are fetched only when you click Refresh or an account row; the plugin never changes routing.
 
 ## Development
 

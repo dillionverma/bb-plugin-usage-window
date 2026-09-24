@@ -9,8 +9,16 @@ export function createSnapshotCache(
   let snapshot: Snapshot = { accounts: [], fetchedAt: null, error: null };
   let nextReadAt = 0;
   let pending: Promise<Snapshot> | null = null;
-  return (force = false) => {
-    if (pending) return pending;
+  let queued: Promise<Snapshot> | null = null;
+  const get = (force = false): Promise<Snapshot> => {
+    if (pending) {
+      if (!force) return pending;
+      // A forced read must start after the in-flight one, or it would return pre-refresh data.
+      return (queued ??= pending.then(() => {
+        queued = null;
+        return get(true);
+      }));
+    }
     if (!force && clock() < nextReadAt) return Promise.resolve(snapshot);
     pending = Promise.resolve()
       .then(read)
@@ -33,4 +41,5 @@ export function createSnapshotCache(
       });
     return pending;
   };
+  return get;
 }
