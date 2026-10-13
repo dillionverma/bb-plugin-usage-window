@@ -1,6 +1,6 @@
 import { definePluginApp } from "@get-bb/plugin-sdk/app";
-import { Monitor } from "./monitor";
-import { useSnapshot } from "./use-snapshot";
+import { Monitor } from "./window/monitor";
+import { useSnapshot } from "./window/use-snapshot";
 import "./app.css";
 function LiveMonitor() {
   const {

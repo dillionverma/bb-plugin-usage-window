@@ -8,7 +8,7 @@ import {
   within,
 } from "@testing-library/react";
 import { Monitor } from "./monitor";
-import type { Account, Snapshot } from "./model";
+import type { Account, Snapshot } from "../usage/model";
 const now = Date.now();
 function makeAccounts(count: number): Account[] {
   return Array.from({ length: count }, (_, i) => ({

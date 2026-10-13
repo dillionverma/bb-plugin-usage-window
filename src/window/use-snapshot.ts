@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRpc } from "@get-bb/plugin-sdk/app";
-import type { rpcContract } from "./server";
-import type { Snapshot } from "./model";
+import type { rpcContract } from "../server";
+import type { Snapshot } from "../usage/model";
 
 type Request = { kind: "all" } | { kind: "account"; accountId: string };
 

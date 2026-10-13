@@ -14,7 +14,7 @@ import {
   type Account,
   type QuotaWindow,
   type Snapshot,
-} from "./model";
+} from "../usage/model";
 import { useFloatingWindow } from "./use-floating-window";
 
 const ROW_HEIGHT = 36;

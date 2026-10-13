@@ -1,9 +1,9 @@
 import { defineRpcContract, type BbPluginApi } from "@get-bb/plugin-sdk";
 import { z } from "zod";
-import { normalizePool } from "./model";
-import { poolSchema, snapshotSchema } from "./schemas";
-import { additionalAccounts, usageSchema } from "./provider-usage";
-import { createSnapshotCache } from "./cache";
+import { normalizePool } from "./usage/model";
+import { poolSchema, snapshotSchema } from "./usage/schemas";
+import { additionalAccounts, usageSchema } from "./usage/provider-usage";
+import { createSnapshotCache } from "./usage/cache";
 
 export const rpcContract = defineRpcContract({
   refresh: { input: z.null(), output: snapshotSchema },
